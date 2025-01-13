@@ -4,5 +4,5 @@ This API sample demonstrates the use of queued buffer management for image acqui
 
 Queued buffer acquisition provides precise control over buffer handling, making it suitable for scenarios requiring sequential image processing and minimal data loss.
 
-* KYFGLib_Example_QueuedBuffers.py is for single camera
-* KYFGLib_Example_QueuedBuffers_mutiple_cameras.py is for multipale camera usage
+* KYFGLib_Example_QueuedBuffers.py — single camera usage
+* KYFGLib_Example_QueuedBuffers_mutiple_cameras.py — multiple camera usage
