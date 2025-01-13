@@ -4,9 +4,10 @@ This test case outlines the process to test image acquisition using GPIO trigger
 ## Purpose
 Verify that the frame grabber can acquire images correctly using GPIO triggers.
 
----
-
 ## Test Procedure
+
+Connect at least 1 camera with Trigger Mode support.
+Connect GPIO loopback to the frame grabber.
 
 ### Steps
 
@@ -54,29 +55,11 @@ Verify that the frame grabber can acquire images correctly using GPIO triggers.
    - Stop the stream.  
    - Close the frame grabber.
 
----
+## Parametrization
+
+--outputLine KY_TTL_0 --inputLine KY_TTL_2 --expectedFPS 40 --duration 10",
 
 ## Pass Criteria
 
 - **Frame Counter Validation:**  
   - `FrameCounter` = `expectedFPS` * `Duration` (±1%)
-
----
-
-## Configuration
-
-{
-"pytest_parametrize":
-[
-"--outputLine KY_TTL_0 --inputLine KY_TTL_2 --expectedFPS 40 --duration 10",
-"--outputLine KY_TTL_1 --inputLine KY_TTL_3 --expectedFPS 40 --duration 10",
-"--outputLine KY_LVTTL_0 --inputLine KY_LVTTL_1 --expectedFPS 40 --duration 10",
-"--outputLine KY_LVTTL_2 --inputLine KY_LVTTL_3 --expectedFPS 40 --duration 10",
-"--outputLine KY_LVDS_OUT_0 --inputLine KY_LVDS_IN_0 --expectedFPS 40 --duration 10",
-"--outputLine KY_LVDS_OUT_1 --inputLine KY_LVDS_IN_1 --expectedFPS 40 --duration 10",
-"--outputLine KY_OPTO_OUT_0 --inputLine KY_OPTO_IN_0 --expectedFPS 40 --duration 10",
-"--outputLine KY_OPTO_OUT_1 --inputLine KY_OPTO_IN_1 --expectedFPS 40 --duration 10",
-"--outputLine KY_OPTO_OUT_2 --inputLine KY_OPTO_IN_2 --expectedFPS 40 --duration 10",
-"--outputLine KY_OPTO_OUT_3 --inputLine KY_OPTO_IN_3 --expectedFPS 40 --duration 10"
-]
-}
