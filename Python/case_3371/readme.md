@@ -1,23 +1,13 @@
-# Multiple time-synced GPIO triggers
-
+# Multiple Time-synced GPIO Triggers
+This test case outlines the process to test time-synced image acquisition using GPIO triggers on a frame grabber. To use this test case you will need a GPIO cable.
 
 ## Purpose
 Verify there are no drop frames while using GPIO triggers set up to receive time-synced frames from the cameras.
----
 
 ## Test Preparation
 
 Connect at least 2 cameras with Trigger Mode support.
 Connect GPIO cable to the frame grabber.
-
----
-# GPIO Trigger Test Procedure
-
-This document outlines the steps to verify GPIO-based triggering and frame acquisition functionality on a frame grabber.
-
----
-
-## Test Procedure
 
 ### Steps
 
@@ -68,16 +58,11 @@ This document outlines the steps to verify GPIO-based triggering and frame acqui
 
 E.g. 100 frames.
 
----
-
-## Test Pass Criteria
+## Pass Criteria
 
 1. The test passes if:
    - The number of frames received matches the `number_of_frames` parameter for **all cameras**.
 2. Any discrepancy indicates a failure or misconfiguration.
-
---
-
 
 ## Notes
 
