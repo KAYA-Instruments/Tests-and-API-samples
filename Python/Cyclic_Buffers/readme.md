@@ -4,5 +4,5 @@ This API sample demonstrates the use of the cyclic buffer function `KYFG_StreamC
 
 This approach is ideal for high-speed image capture scenarios where real-time processing or continuous streaming is required.
 
-* KYFGLib_Example_QueuedBuffers.py is for single camera
-* KYFGLib_Example_QueuedBuffers_mutiple_cameras.py is for multipale camera usage
+* KYFGLib_API_Sample.py — single camera acqusition sample
+* KYFGLib_API_Sample_mutiple_cameras.py — multiple camera acqusition sample
