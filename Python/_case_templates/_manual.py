@@ -19,7 +19,6 @@ def CaseArgumentParser():
     parser.add_argument('--deviceIndex', type=int, default=-1,
                         help='Index of PCI device to use, '
                              'run this script with "--deviceList" to see available devices and exit')
-    parser.add_argument("--reportFile", type=str, help='name of the system and file name must be same')
 
     return parser
 
@@ -71,9 +70,8 @@ def CaseRun(args):
         return CaseReturnCode.NO_HW_FOUND
 
     # End of common KAYA prolog for "def CaseRun(args)"
-    reportFile = args['reportFile']
-    results_file = pathlib.Path(__file__).parent.joinpath(reportFile)
-    with results_file.open('r') as rf:
+    reportFile = pathlib.Path(__file__).as_posix().replace(".py", ".txt")
+    with open(reportFile, "r") as rf:
         results_file_data = rf.read()
     print(results_file_data)
     if "Summary: No HW Found" in results_file_data:
