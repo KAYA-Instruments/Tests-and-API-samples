@@ -1,0 +1,202 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DebugKY|Win32">
+      <Configuration>DebugKY</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DebugKY|x64">
+      <Configuration>DebugKY</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{480E6E13-0FB6-441E-AB2B-EB8D4BF5729A}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>FG_example</RootNamespace>
+    <ProjectName>KYFGLib_Example</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugKY|x64'" Label="Configuration">
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugKY|Win32'" Label="Configuration">
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(KAYA_DEVENV_ROOT_DIR)\src\KYGlobal\KYGlobal.props" Condition="exists('$(KAYA_DEVENV_ROOT_DIR)\src\KYGlobal\KYGlobal.props')" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <TargetName Condition="'$(KAYA_API_SAMPLE_SOURCE)'==''">KYFGLib_Example</TargetName>
+    <TargetName Condition="'$(KAYA_API_SAMPLE_SOURCE)'!=''">$(KAYA_API_SAMPLE_SOURCE)</TargetName>
+    <OutDir>.\$(Configuration)$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(Configuration)$(PlatformArchitecture)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugKY|Win32'">
+    <TargetName Condition="'$(KAYA_API_SAMPLE_SOURCE)'==''">KYFGLib_Example</TargetName>
+    <TargetName Condition="'$(KAYA_API_SAMPLE_SOURCE)'!=''">$(KAYA_API_SAMPLE_SOURCE)</TargetName>
+    <OutDir>.\$(Configuration)$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(Configuration)$(PlatformArchitecture)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <TargetName Condition="'$(KAYA_API_SAMPLE_SOURCE)'==''">KYFGLib_Example</TargetName>
+    <TargetName Condition="'$(KAYA_API_SAMPLE_SOURCE)'!=''">$(KAYA_API_SAMPLE_SOURCE)</TargetName>
+    <OutDir>.\$(Configuration)$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(Configuration)$(PlatformArchitecture)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName Condition="'$(KAYA_API_SAMPLE_SOURCE)'==''">KYFGLib_Example</TargetName>
+    <TargetName Condition="'$(KAYA_API_SAMPLE_SOURCE)'!=''">$(KAYA_API_SAMPLE_SOURCE)</TargetName>
+    <OutDir>.\$(Configuration)$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(Configuration)$(PlatformArchitecture)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugKY|x64'">
+    <TargetName Condition="'$(KAYA_API_SAMPLE_SOURCE)'==''">KYFGLib_Example</TargetName>
+    <TargetName Condition="'$(KAYA_API_SAMPLE_SOURCE)'!=''">$(KAYA_API_SAMPLE_SOURCE)</TargetName>
+    <OutDir>.\$(Configuration)$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(Configuration)$(PlatformArchitecture)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName Condition="'$(KAYA_API_SAMPLE_SOURCE)'==''">KYFGLib_Example</TargetName>
+    <TargetName Condition="'$(KAYA_API_SAMPLE_SOURCE)'!=''">$(KAYA_API_SAMPLE_SOURCE)</TargetName>
+    <OutDir>.\$(Configuration)$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(Configuration)$(PlatformArchitecture)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Link>
+      <AdditionalLibraryDirectories>$(KAYA_VISION_POINT_LIB_PATH);</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>KYFGLib_vc141.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(KAYA_VISION_POINT_INCLUDE_PATH);</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <Optimization>Disabled</Optimization>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level4</WarningLevel>
+    </ClCompile>
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugKY|x64'">
+    <Link>
+      <AdditionalLibraryDirectories>$(KAYA_VISION_POINT_LIB_PATH);</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>KYFGLib_vc141.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(KAYA_VISION_POINT_INCLUDE_PATH);</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <Optimization>Disabled</Optimization>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level4</WarningLevel>
+    </ClCompile>
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Link>
+      <AdditionalDependencies>KYFGLib_vc141.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(KAYA_VISION_POINT_LIB_PATH);</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(KAYA_VISION_POINT_INCLUDE_PATH);</AdditionalIncludeDirectories>
+      <CompileAs>CompileAsC</CompileAs>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level4</WarningLevel>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugKY|Win32'">
+    <Link>
+      <AdditionalDependencies>KYFGLib_vc141.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(KAYA_VISION_POINT_LIB_PATH);</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(KAYA_VISION_POINT_INCLUDE_PATH);</AdditionalIncludeDirectories>
+      <CompileAs>CompileAsC</CompileAs>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level4</WarningLevel>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(KAYA_VISION_POINT_INCLUDE_PATH);%(AdditionalIncludeDirectories);</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level4</WarningLevel>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(KAYA_VISION_POINT_LIB_PATH)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>KYFGLib_vc141.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;Rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(KAYA_VISION_POINT_INCLUDE_PATH);</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level4</WarningLevel>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(KAYA_VISION_POINT_LIB_PATH);</AdditionalLibraryDirectories>
+      <AdditionalDependencies>KYFGLib_vc141.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;Rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugKY|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugKY|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Condition="'$(KAYA_API_SAMPLE_SOURCE)'==''" Include="KYFGLib_Example.c" />
+    <ClCompile Condition="'$(KAYA_API_SAMPLE_SOURCE)'!=''" Include="$(KAYA_API_SAMPLE_SOURCE)" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
