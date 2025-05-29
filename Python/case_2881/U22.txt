@@ -1,3 +1,0 @@
-Test results:
-
-Summary: Passed

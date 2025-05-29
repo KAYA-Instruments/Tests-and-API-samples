@@ -1,0 +1,191 @@
+#!/usr/bin/env python3
+"""
+Git pre-commit hook that enforces:
+  1. A non-empty commit message.
+  2. No tab (\t) characters in staged files (unless the commit message contains PASS_TAB_CHECK).
+  3. For files matching case_<number>.py, validate file content by comparing it to a template file
+     using verify_cases.verify_lines(). (This check is skipped if PASS_CASE_CHECK is in the commit message.)
+  4. Excludes files based on defined extensions and filenames.
+
+This script prints errors immediately as they are found and processes all files before exiting.
+It is designed to work on Windows, Mac, and Linux.
+"""
+
+import os
+import re
+import sys
+import subprocess
+
+# --- Configuration variables ---
+
+# List of file extensions to ignore (e.g. binary/image files)
+EXCLUDED_EXTENSIONS = ['.vcproj', '.vcxproj', '.sln', '.props', '.filters', '.user', '.pdf', '.docx', '.doc', '.png']
+# List of specific filenames to ignore (e.g. documentation)
+EXCLUDED_FILENAMES = ['README.md', 'LICENSE', 'Makefile', 'CMakeLists.txt']
+
+# Template file used for case file validation.
+TEMPLATE_FILE = "Python\case_3211\case_3211.py"
+
+# --- Helper functions ---
+
+def get_commit_message():
+    """
+    Retrieve the commit message.
+    If a file path is passed as an argument, read that file.
+    Otherwise, attempt to read the .git/COMMIT_EDITMSG file.
+    """
+    commit_msg = ""
+    if len(sys.argv) > 1:
+        commit_msg_file = sys.argv[1]
+        if os.path.isfile(commit_msg_file):
+            with open(commit_msg_file, 'r', encoding='utf-8') as f:
+                commit_msg = f.read().strip()
+        else:
+            print(f"Error: Commit message file not found: {commit_msg_file}")
+            sys.exit(1)
+    else:
+        # Attempt to locate the COMMIT_EDITMSG file in the .git directory.
+        try:
+            git_dir = subprocess.run(
+                ["git", "rev-parse", "--git-dir"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                check=True
+            ).stdout.strip()
+        except subprocess.CalledProcessError:
+            print("Error: Unable to locate the .git directory.")
+            sys.exit(1)
+        commit_msg_file = os.path.join(git_dir, "COMMIT_EDITMSG")
+        if os.path.isfile(commit_msg_file):
+            with open(commit_msg_file, 'r', encoding='utf-8') as f:
+                commit_msg = f.read().strip()
+    return commit_msg
+
+def get_staged_files():
+    """
+    Retrieve a list of files staged for commit.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--cached", "--name-only"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            check=True
+        )
+    except subprocess.CalledProcessError:
+        print("Error: Could not get list of staged files.")
+        sys.exit(1)
+    files = result.stdout.splitlines()
+    return files
+
+def file_has_tabs(file_path):
+    """
+    Check if the file at file_path contains any tab characters.
+    Returns the line number where a tab is found, or None if no tab is present.
+    """
+    tab_lines = []
+    try:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            for i, line in enumerate(f, start=1):
+                if "\t" in line:
+                    tab_lines.append(i)
+    except Exception as e:
+        print(f"Error reading file '{file_path}': {e}")
+        # Consider this an error condition.
+        return -1
+    if tab_lines:
+        return tab_lines
+    else:
+        return None
+
+# --- Main Hook Logic ---
+
+def main():
+    error_found = False
+
+    # Retrieve and validate the commit message.
+    commit_msg = get_commit_message()
+    if not commit_msg:
+        print("Error: Commit message is empty.")
+        error_found = True
+
+    # Determine if tab or case checks should be skipped.
+    skip_tab_check = "PASS_TAB_CHECK" in commit_msg
+    skip_case_check = "PASS_CASE_CHECK" in commit_msg
+
+    # Retrieve list of staged files.
+    staged_files = get_staged_files()
+
+    # Cache for template content (loaded once for all case files)
+    template_lines = None
+
+    for file_path in staged_files:
+        # Skip if the file no longer exists (e.g., deleted files).
+        if not os.path.isfile(file_path):
+            continue
+
+        file_name = os.path.basename(file_path)
+        _, ext = os.path.splitext(file_name)
+        if ext in EXCLUDED_EXTENSIONS or file_name in EXCLUDED_FILENAMES:
+            continue
+
+        # --- Tab Character Check ---
+        if not skip_tab_check:
+            tab_lines = file_has_tabs(file_path)
+            if tab_lines is not None:
+                # If tab_line == -1, it means an error occurred reading the file.
+                if tab_lines == -1:
+                    error_found = True
+                else:
+                    print(f"Error: Tab character found in file '{file_path}' at lines {', '.join(str(line) for line in tab_lines)}")
+                    error_found = True
+
+        # --- Case File Validation ---
+        if not skip_case_check and re.match(r'^case_\d+\.py$', file_name):
+            # Attempt to import the verify_cases module.
+            try:
+                import verify_cases
+            except ImportError:
+                print("Error: Could not import the verify_cases module.")
+                error_found = True
+                # Cannot perform validation for this file, so continue.
+                continue
+
+            # Load the template content (only once).
+            if template_lines is None:
+                if not os.path.isfile(TEMPLATE_FILE):
+                    print(f"Error: Template file '{TEMPLATE_FILE}' not found.")
+                    error_found = True
+                    # Skip validation for this file.
+                    continue
+                try:
+                    with open(TEMPLATE_FILE, 'r', encoding='utf-8') as f:
+                        template_lines = f.readlines()
+                except Exception as e:
+                    print(f"Error: Could not read template file '{TEMPLATE_FILE}': {e}")
+                    error_found = True
+                    continue
+
+            # Read the content of the current case file.
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    file_lines = f.readlines()
+            except Exception as e:
+                print(f"Error: Could not read file '{file_path}': {e}")
+                error_found = True
+                continue
+
+            # Validate the case file by comparing its content with the template.
+            if not verify_cases.verify_lines(template_lines, file_lines, file_path, False):
+                print(f"Error: Case file validation failed for '{file_path}'.")
+                error_found = True
+
+    # Final exit after processing all files.
+    if error_found:
+        sys.exit(1)
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()
