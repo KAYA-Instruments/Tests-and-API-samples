@@ -3,12 +3,17 @@ import sys
 import os
 import argparse
 sys.path.insert(0, os.environ['KAYA_VISION_POINT_PYTHON_PATH'])
+#os.environ["WithAdapter"] = "1" # uncomment this section to work through Vision Point II Adapter
 from KYFGLib import *
 
 # Common Case imports DO NOT EDIT!!!
 from enum import IntEnum  # for CaseReturnCode
 
 # additional imports required by particular case, ADD CASE SPECIFIC IMPORTS UNDER THIS LINE:
+# For example:
+# import numpy as np
+# import cv2
+# from numpngw import write_png
 import time
 
 
@@ -23,14 +28,28 @@ def CaseArgumentParser():
                         help='Index of PCI device to use, '
                              'run this script with "--deviceList" to see available devices and exit')
     # Other arguments needed for this specific case, PARSE CASE SPECIFIC ARGUMENTS UNDER THIS LINE:
-    parser.add_argument('--ExpectedFPS', default=20, type=int, help='ExpectedFPS')
-    parser.add_argument('--streamDuration', default=50, type=int, help='streamDuration')
+    parser.add_argument('--ExpectedFPS', default=10, type=int, help='ExpectedFPS')
+    parser.add_argument('--streamDuration', default=10, type=int, help='streamDuration')
     return parser
+
+
+def Reset_Grabber(grabberHandle):
+    pass
+    # Grabber initialization for this specific test
+
+
+def Reset_camera(cameraHandle):
+    pass
+    # Camera initialization for this specific test
+
+
 
 def ParseArgs():
     parser = CaseArgumentParser()
     args = parser.parse_args()
     return vars(args)
+
+
 ##########
 # Classes
 ##########
@@ -39,6 +58,8 @@ class StreamCallbackStruct():
         self.callbackCounter = 0
         self.firstTimestamp = 0
         self.timestamps = []
+
+
 ##########
 # Functions
 ##########
@@ -63,6 +84,8 @@ def streamCallbackFunc(buffHandle, userContext):
     except:
         return
     return
+
+
 def CaseRun(args):
     print(f'\nEntering CaseRun({args}) (use -h or --help to print available parameters and exit)...')
 
@@ -107,6 +130,8 @@ def CaseRun(args):
         return CaseReturnCode.NO_HW_FOUND
 
     # End of common KAYA prolog for "def CaseRun(args)"
+
+    # Other parameters used by this particular case
     ExpectedFPS = args['ExpectedFPS']
     streamDuration = args['streamDuration']
     (grabberHandle,) = KYFG_Open(device_index)
@@ -127,7 +152,7 @@ def CaseRun(args):
         if not KYFG_IsCameraValueImplemented(cameraHandle, "TriggerMode") and not KYFG_IsCameraValueImplemented(cameraHandle, "SimulationTriggerMode"):
             return CaseReturnCode.NO_HW_FOUND
         (status, camInfo) = KYFG_CameraInfo2(cameraHandle)
-        print(f'Camera {camInfo.deviceModelName} opened')
+        print(f'\n*** Camera {camInfo.deviceModelName} opened ***')
         (status,) = KYFG_SetGrabberValueInt(int(grabberHandle), 'CameraSelector', cameraList.index(cameraHandle))
         (status,) = KYFG_SetGrabberValueEnum(grabberHandle, "CameraTriggerMode", 1)
         (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, 'CameraTriggerActivation', "AnyEdge")
@@ -155,8 +180,8 @@ def CaseRun(args):
 
         (status,) = KYFG_BufferQueueAll(streamHandle, KY_ACQ_QUEUE_TYPE.KY_ACQ_QUEUE_UNQUEUED,
                                         KY_ACQ_QUEUE_TYPE.KY_ACQ_QUEUE_INPUT)
-        print(f'GrabberHandle: {grabberHandle}; CameraHandle: {hex(cameraHandle)}; streamHandle: {streamHandle}')
-        print('Stram preparation completed')
+        print(f'GrabberHandle: {grabberHandle} \nCameraHandle: {hex(cameraHandle)} \nStreamHandle: {streamHandle}')
+        print('Stream preparation completed')
         (status,) = KYFG_CameraStart(cameraHandle, streamHandle, 0)
         print(f"Camera {camInfo.deviceModelName} stream started")
     (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, 'TimerSelector', "Timer0")
@@ -165,7 +190,7 @@ def CaseRun(args):
     (status,) = KYFG_SetGrabberValueEnum(grabberHandle, "TimerTriggerSource", 0)
     is_test_passed = True
     for cameraHandle in cameraList:
-        print('cameraHandle', cameraHandle)
+        print(f"\n*** Stats for CameraHandle {cameraHandle} ***")
         streamHandle = streamHandle_array[cameraList.index(cameraHandle)]
         streamCallbackStruct = streamStructsArray[cameraList.index(cameraHandle)]
         (status, camInfo) = KYFG_CameraInfo2(cameraHandle)
@@ -176,12 +201,12 @@ def CaseRun(args):
         (status, drop_frame_counter) = KYFG_GetGrabberValueInt(grabberHandle, "DropFrameCounter")
         (status,) = KYFG_StreamDelete(streamHandle)
         KYFG_SetCameraValueEnum(cameraHandle, "TriggerMode", 0)
-        (status,) = KYFG_CameraClose(cameraHandle)
-        print(f"Camera {camInfo.deviceModelName} Closed")
-        print("frame_counter: ", frame_counter)
-        print("drop_frame_counter: ", drop_frame_counter)
-        print("callbackCounter: ", streamCallbackStruct.callbackCounter)
         KYFG_SetGrabberValueEnum(grabberHandle, "CameraTriggerMode", 0)
+        (status,) = KYFG_CameraClose(cameraHandle)
+        print(f"{camInfo.deviceModelName} successfully closed")
+        print("RXFrameCounter:   ", frame_counter)
+        print("DropFrameCounter: ", drop_frame_counter)
+        print("CallbackCounter:  ", streamCallbackStruct.callbackCounter)
         if frame_counter == 0 or drop_frame_counter > 0:
             is_test_passed = False
     differences = []
@@ -190,14 +215,15 @@ def CaseRun(args):
         differences.append(difference)
         print(f"{i + 1}: ", streamStructsArray[0].timestamps[i], (streamStructsArray[1].timestamps[i]),
               difference)
+    
     (status,) = KYFG_Close(int(grabberHandle))
     assert is_test_passed, 'Test not passed: frame_counter == 0 or drop_frame_counter > 0'
     assert abs(sum(differences)/len(differences)) < 1e+4, 'Test not passed: Difference between timestamps to large'
 
-
-
     print(f'\nExiting from CaseRun({args}) with code SUCCESS...')
     return CaseReturnCode.SUCCESS
+
+
 # The flow starts here
 if __name__ == "__main__":
     try:
