@@ -3,12 +3,17 @@ import sys
 import os
 import argparse
 sys.path.insert(0, os.environ['KAYA_VISION_POINT_PYTHON_PATH'])
+#os.environ["WithAdapter"] = "1" # uncomment this line to use it with Vision Point II adapter
 from KYFGLib import *
 
 # Common Case imports DO NOT EDIT!!!
 from enum import IntEnum  # for CaseReturnCode
 
 # additional imports required by particular case, ADD CASE SPECIFIC IMPORTS UNDER THIS LINE:
+# For example:
+# import numpy as np
+# import cv2
+# from numpngw import write_png
 import time
 
 
@@ -24,23 +29,38 @@ def CaseArgumentParser():
                              'run this script with "--deviceList" to see available devices and exit')
     # Other arguments needed for this specific case, PARSE CASE SPECIFIC ARGUMENTS UNDER THIS LINE:
     parser.add_argument('--outputLine', default='KY_OPTO_OUT_0', type=str, help='Output line')
-    parser.add_argument('--inputLine', default='KY_OPTO_IN_0', type=str, help='input line')
+    parser.add_argument('--inputLine', default='KY_OPTO_IN_0', type=str, help='Input line')
     parser.add_argument('--expectedPulseRate', default=10, type=int, help='Triggers per second')
-    parser.add_argument('--duration', default=3, type=int, help='Duration of trigger generation')
-
+    parser.add_argument('--duration', default=3, type=int, help='Duration of trigger')
     return parser
+
+
+def Reset_Grabber(grabberHandle):
+    pass
+    # Grabber initialization for this specific test
+
+
+def Reset_camera(cameraHandle):
+    pass
+    # Camera initialization for this specific test
+
+
 
 def ParseArgs():
     parser = CaseArgumentParser()
     args = parser.parse_args()
     return vars(args)
+
+
 class AUXCallbackStruct:
     def __init__(self):
         self.callbackCounter = 0
         return
+
 def AUXCallbackFunction(buffHandle, userContext):
     callback_struct = cast(userContext, py_object).value
     callback_struct.callbackCounter += 1
+
 
 def CaseRun(args):
     print(f'\nEntering CaseRun({args}) (use -h or --help to print available parameters and exit)...')
@@ -86,6 +106,8 @@ def CaseRun(args):
         return CaseReturnCode.NO_HW_FOUND
 
     # End of common KAYA prolog for "def CaseRun(args)"
+
+    # Other parameters used by this particular case
     outputLine = args['outputLine']
     inputLine = args['inputLine']
     expectedPulseRate = args['expectedPulseRate']
@@ -128,8 +150,9 @@ def CaseRun(args):
     (status,) = KYFG_SetGrabberValueEnum(grabberHandle, "TriggerMode", 0)
     (status,) = KYFG_CameraClose(camList[0])
     (status,) = KYFG_Close(grabberHandle)
-    assert abs(aux_callback_struct.callbackCounter-(expectedPulseRate*duration)) < (expectedPulseRate*duration)/100
-
+    print(f"Actual callbacks: {aux_callback_struct.callbackCounter}, expected: {expectedPulseRate*duration}")
+    assert abs(aux_callback_struct.callbackCounter-(expectedPulseRate*duration)) <= 2
+    
     print(f'\nExiting from CaseRun({args}) with code SUCCESS...')
     return CaseReturnCode.SUCCESS
 
