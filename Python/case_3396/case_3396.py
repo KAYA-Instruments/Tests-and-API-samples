@@ -3,7 +3,6 @@ import sys
 import os
 import argparse
 sys.path.insert(0, os.environ['KAYA_VISION_POINT_PYTHON_PATH'])
-#os.environ["WithAdapter"] = "1" # uncomment this section to work through Vision Point II Adapter
 from KYFGLib import *
 
 # Common Case imports DO NOT EDIT!!!
@@ -28,7 +27,7 @@ def CaseArgumentParser():
                         help='Index of PCI device to use, '
                              'run this script with "--deviceList" to see available devices and exit')
     # Other arguments needed for this specific case, PARSE CASE SPECIFIC ARGUMENTS UNDER THIS LINE:
-    parser.add_argument('--ExpectedFPS', default=10, type=int, help='ExpectedFPS')
+    parser.add_argument('--expectedFPS', default=10, type=int, help='expectedFPS')
     parser.add_argument('--streamDuration', default=10, type=int, help='streamDuration')
     return parser
 
@@ -132,19 +131,20 @@ def CaseRun(args):
     # End of common KAYA prolog for "def CaseRun(args)"
 
     # Other parameters used by this particular case
-    ExpectedFPS = args['ExpectedFPS']
+    expectedFPS = args['expectedFPS']
     streamDuration = args['streamDuration']
     (grabberHandle,) = KYFG_Open(device_index)
     (status, cameraList) = KYFG_UpdateCameraList(grabberHandle)
     if len(cameraList) < 2:
         print(len(cameraList), 'cameras detected')
         return CaseReturnCode.NO_HW_FOUND
+
     # Grabber trigger setting
-    (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, 'TimerSelector', "Timer0")
-    FrameTime = 1e+6 / ExpectedFPS
-    (status,) = KYFG_SetGrabberValueFloat(int(grabberHandle), 'TimerDelay', FrameTime / 2)
-    (status,) = KYFG_SetGrabberValueFloat(int(grabberHandle), 'TimerDuration', FrameTime / 2)
-    (status,) = KYFG_SetGrabberValueEnum(grabberHandle, "TimerTriggerSource", 0)
+    (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, "TimerSelector", "Timer0")
+    FrameTime = 1e+6 / expectedFPS
+    (status,) = KYFG_SetGrabberValueFloat(int(grabberHandle), "TimerDelay", FrameTime / 2)
+    (status,) = KYFG_SetGrabberValueFloat(int(grabberHandle), "TimerDuration", FrameTime / 2)
+    (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, "TimerTriggerSource", "KY_DISABLED")
     streamHandle_array = []
     streamStructsArray = []
     for cameraHandle in cameraList:
@@ -153,44 +153,58 @@ def CaseRun(args):
             return CaseReturnCode.NO_HW_FOUND
         (status, camInfo) = KYFG_CameraInfo2(cameraHandle)
         print(f'\n*** Camera {camInfo.deviceModelName} opened ***')
-        (status,) = KYFG_SetGrabberValueInt(int(grabberHandle), 'CameraSelector', cameraList.index(cameraHandle))
-        (status,) = KYFG_SetGrabberValueEnum(grabberHandle, "CameraTriggerMode", 1)
-        (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, 'CameraTriggerActivation', "AnyEdge")
-        (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, 'CameraTriggerSource', "KY_TIMER_ACTIVE_0")
-        KYFG_SetCameraValueEnum(cameraHandle, "TriggerMode", 1)
-        KYFG_SetCameraValueEnum_ByValueName(cameraHandle, "TriggerSource", 'LinkTrigger0')
+        (status,) = KYFG_SetGrabberValueInt(int(grabberHandle), "CameraSelector", cameraList.index(cameraHandle))
+        
+        # Setting up trigger mode for the camera on the grabber side
+        (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, "CameraTriggerMode", "On")
+        (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, "CameraTriggerActivation", "AnyEdge")
+        (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, "CameraTriggerSource", "KY_TIMER_ACTIVE_0")
+        
+        # Setting up trigger mode for the camera on the camera side
+        KYFG_SetCameraValueEnum_ByValueName(cameraHandle, "TriggerMode", "On")
+        KYFG_SetCameraValueEnum_ByValueName(cameraHandle, "TriggerSource", "LinkTrigger0")
+        
+        # Setting up exposure
         KYFG_SetCameraValueEnum_ByValueName(cameraHandle, "ExposureAuto", "Off")
-        KYFG_SetCameraValueFloat(cameraHandle, "ExposureTime", 5000.0)
-        # stream preparation
+        Exposure = 1e+6 / expectedFPS * 0.9
+        KYFG_SetCameraValueFloat(cameraHandle, "ExposureTime", Exposure)
+        
+        # Stream preparation
         (status, streamHandle) = KYFG_StreamCreate(cameraHandle, 0)
         streamHandle_array.append(streamHandle)
         streamCallbackStruct = StreamCallbackStruct()
         streamStructsArray.append(streamCallbackStruct)
-        (status,) = KYFG_StreamBufferCallbackRegister(streamHandle, streamCallbackFunc,
-                                                      py_object(streamCallbackStruct))
+        (status,) = KYFG_StreamBufferCallbackRegister(streamHandle, streamCallbackFunc, py_object(streamCallbackStruct))
         (_, payload_size, _, _) = KYFG_StreamGetInfo(streamHandle, KY_STREAM_INFO_CMD.KY_STREAM_INFO_PAYLOAD_SIZE)
-        (_, buf_allignment, _, _) = KYFG_StreamGetInfo(streamHandle,
-                                                       KY_STREAM_INFO_CMD.KY_STREAM_INFO_BUF_ALIGNMENT)
-        streamBufferHandle = [0 for i in range(100)]
-        # streamAllignedBuffer = [0 for i in range(32)]
+        (_, buf_allignment, _, _) = KYFG_StreamGetInfo(streamHandle, KY_STREAM_INFO_CMD.KY_STREAM_INFO_BUF_ALIGNMENT)
+        
+        # Setting up optimal buffer quantity
+        Buffers = int(expectedFPS * 0.25)
+        print(f"Allocating {Buffers} buffers")
+        streamBufferHandle = [0 for i in range(Buffers)]
+
         for iFrame in range(len(streamBufferHandle)):
-            # streamAllignedBuffer[iFrame] = aligned_array(buf_allignment, c_ubyte, payload_size)
-            # (status, streamBufferHandle[iFrame]) = KYFG_BufferAnnounce(streamHandle, streamAllignedBuffer[iFrame], None)
             (status, streamBufferHandle[iFrame]) = KYFG_BufferAllocAndAnnounce(streamHandle, payload_size, None)
 
         (status,) = KYFG_BufferQueueAll(streamHandle, KY_ACQ_QUEUE_TYPE.KY_ACQ_QUEUE_UNQUEUED,
                                         KY_ACQ_QUEUE_TYPE.KY_ACQ_QUEUE_INPUT)
         print(f'GrabberHandle: {grabberHandle} \nCameraHandle: {hex(cameraHandle)} \nStreamHandle: {streamHandle}')
-        print('Stream preparation completed')
         (status,) = KYFG_CameraStart(cameraHandle, streamHandle, 0)
-        print(f"Camera {camInfo.deviceModelName} stream started")
-    (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, 'TimerSelector', "Timer0")
-    (status,) = KYFG_SetGrabberValueEnum(grabberHandle, "TimerTriggerSource", 42)  # Continuous
+        print(f"Camera {camInfo.deviceModelName} streaming")
+    
+    # Configuring timer on the grabber side
+    (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, "TimerSelector", "Timer0")
+    (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, "TimerTriggerSource", "KY_CONTINUOUS")
+    
+    # Waiting for the designated time duration
     time.sleep(streamDuration)
-    (status,) = KYFG_SetGrabberValueEnum(grabberHandle, "TimerTriggerSource", 0)
+    
+    # Stopping the timer trigger
+    (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, "TimerTriggerSource", "KY_DISABLED")
     is_test_passed = True
+    
     for cameraHandle in cameraList:
-        print(f"\n*** Stats for CameraHandle {cameraHandle} ***")
+        print(f"\n*** Stats for {camInfo.deviceModelName} ***")
         streamHandle = streamHandle_array[cameraList.index(cameraHandle)]
         streamCallbackStruct = streamStructsArray[cameraList.index(cameraHandle)]
         (status, camInfo) = KYFG_CameraInfo2(cameraHandle)
@@ -200,21 +214,21 @@ def CaseRun(args):
         (status, frame_counter) = KYFG_GetGrabberValueInt(grabberHandle, "RXFrameCounter")
         (status, drop_frame_counter) = KYFG_GetGrabberValueInt(grabberHandle, "DropFrameCounter")
         (status,) = KYFG_StreamDelete(streamHandle)
-        KYFG_SetCameraValueEnum(cameraHandle, "TriggerMode", 0)
-        KYFG_SetGrabberValueEnum(grabberHandle, "CameraTriggerMode", 0)
+        KYFG_SetCameraValueEnum_ByValueName(cameraHandle, "TriggerMode", "Off")
+        KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, "CameraTriggerMode", "Off")
         (status,) = KYFG_CameraClose(cameraHandle)
-        print(f"{camInfo.deviceModelName} successfully closed")
+        print(f"CameraHandle {cameraHandle}")
         print("RXFrameCounter:   ", frame_counter)
         print("DropFrameCounter: ", drop_frame_counter)
         print("CallbackCounter:  ", streamCallbackStruct.callbackCounter)
         if frame_counter == 0 or drop_frame_counter > 0:
             is_test_passed = False
     differences = []
+    
     for i in range(len(streamStructsArray[0].timestamps)):
         difference = streamStructsArray[0].timestamps[i] - streamStructsArray[1].timestamps[i]
         differences.append(difference)
-        print(f"{i + 1}: ", streamStructsArray[0].timestamps[i], (streamStructsArray[1].timestamps[i]),
-              difference)
+        #print(f"{i + 1}: ", streamStructsArray[0].timestamps[i], (streamStructsArray[1].timestamps[i]), difference)
     
     (status,) = KYFG_Close(int(grabberHandle))
     assert is_test_passed, 'Test not passed: frame_counter == 0 or drop_frame_counter > 0'
