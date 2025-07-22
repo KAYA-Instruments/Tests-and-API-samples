@@ -9,10 +9,41 @@ from KYFGLib import *
 from enum import IntEnum  # for CaseReturnCode
 
 # additional imports required by particular case, ADD CASE SPECIFIC IMPORTS UNDER THIS LINE:
+# For example:
+# import numpy as np
+# import cv2
+# from numpngw import write_png
 import subprocess
 import time
-sys.path.insert(0, os.environ['KAYA_VISION_POINT_PYTHON_PATH'])
-from KYFGLib import *
+
+
+def CaseArgumentParser():
+    parser = argparse.ArgumentParser()
+    # Common arguments for all cases DO NOT EDIT!!!
+    parser.add_argument('--unattended', default=False, action='store_true', help='Do not interact with user')
+    parser.add_argument('--no-unattended', dest='unattended', action='store_false')
+    parser.add_argument('--deviceList', default=False, action='store_true',
+                        help='Print list of available devices and exit')
+    parser.add_argument('--deviceIndex', type=int, default=-1,
+                        help='Index of PCI device to use, '
+                             'run this script with "--deviceList" to see available devices and exit')
+    # Other arguments needed for this specific case, PARSE CASE SPECIFIC ARGUMENTS UNDER THIS LINE:
+    parser.add_argument('--number_of_tests', type=int, default=20, help='Number of camera start/stop in a loop')
+    parser.add_argument('--num_of_frames', type=int, default=10)
+    parser.add_argument('--sleep_after_camera_start', type=float, default=0.3)
+
+    return parser
+
+
+def Reset_Grabber(grabberHandle):
+    pass
+    # Grabber initialization for this specific test
+
+
+def Reset_camera(cameraHandle):
+    pass
+    # Camera initialization for this specific test
+
 
 
 def pipes_number(pid):
@@ -21,6 +52,8 @@ def pipes_number(pid):
     res = p.stdout.read()
     retcode = p.wait()
     return int(res)
+
+
 def ConnectToCamera(handle):
     """Connect to camera"""
     (status, camHandleArray) = KYFG_UpdateCameraList(handle)
@@ -33,33 +66,15 @@ def ConnectToCamera(handle):
         print("\nFound " + str(cams_num) + " cameras")
     return camHandleArray[0]
 
+
 def Stream_callback_func(buffHandle, userContext):
-    if (buffHandle == 0):
+    if buffHandle == 0:
         Stream_callback_func.copyingDataFlag = 0
         return
     print('Good callback streams buffer handle: ' + str(buffHandle))
     (KYFG_BufferToQueue_status,) = KYFG_BufferToQueue(buffHandle, KY_ACQ_QUEUE_TYPE.KY_ACQ_QUEUE_INPUT)
     return
 
-def CaseArgumentParser():
-    parser = argparse.ArgumentParser()
-
-    # Common arguments for all cases DO NOT EDIT!!!
-    parser.add_argument('--unattended', default=False, action='store_true', help='Do not interact with user')
-    parser.add_argument('--no-unattended', dest='unattended', action='store_false')
-
-    parser.add_argument('--deviceList', default=False, action='store_true',
-                        help='Print list of available devices and exit')
-    parser.add_argument('--deviceIndex', type=int, default=-1,
-                        help='Index of PCI device to use, '
-                             'run this script with "--deviceList" to see available devices and exit')
-    # Other arguments needed for this specific case, PARSE CASE SPECIFIC ARGUMENTS UNDER THIS LINE:
-    parser.add_argument('--number_of_tests', type=int, default=20,
-                        help='Number of camera start/stop in a loop')
-    parser.add_argument('--num_of_frames', type=int, default=10)
-    parser.add_argument('--sleep_after_camera_start', type=float, default=0.3)
-
-    return parser
 
 def CaseRun(args):
     print(f'\nEntering CaseRun({args}) (use -h or --help to print available parameters and exit)...')
@@ -106,89 +121,78 @@ def CaseRun(args):
 
     # End of common KAYA prolog for "def CaseRun(args)"
 
+    # Other parameters used by this particular case
     system_platform = platform.system().lower()
     if system_platform == 'windows':
-        print('This case is for linux os only!')
+        print('This test case is for Linux OS only')
         return CaseReturnCode.WRONG_PARAM_VALUE
-
 
     num_of_frames = args["num_of_frames"]
     number_of_tests = args["number_of_tests"]
     sleep_after_camera_start = args["sleep_after_camera_start"]
 
-
     # Open selected PCI device (grabber)
     (grabber_handle,) = KYFG_Open(device_index)
-
-    #Here must be KYFG_SetGrabberValue() if it need
     device_info = device_infos[device_index]
-    print(f'Opened device [{device_index}]: (PCI {device_info.nBus}:{device_info.nSlot}:{device_info.nFunction})"{device_info.szDeviceDisplayName}"')
+    print(f'Open [{device_index}]: (PCI {device_info.nBus}:{device_info.nSlot}:{device_info.nFunction})"{device_info.szDeviceDisplayName}"')
     (status, tested_dev_info) = KY_DeviceInfo(device_index)
     print("Device " + str(device_index) + " is tested: " + tested_dev_info.szDeviceDisplayName)
 
-    # Connect to camera
+    # Connect and open camera
     camera_handle = ConnectToCamera(grabber_handle)
-
-    # Camera open and start
     (cam_open_status,) = KYFG_CameraOpen2(camera_handle, None)
 
     # Here must be KYFG_SetCameraValue(), KYFG_SetGrabberValue() if it need
 
-    # create stream and assign appropriate runtime acquisition callback function
+    # Create stream and assign appropriate runtime acquisition callback function
     (status, buff_handle) = KYFG_StreamCreate(camera_handle, 0)
     (status,) = \
         KYFG_StreamBufferCallbackRegister(buff_handle, Stream_callback_func, 0)
+        
     # Retrieve information about required frame buffer size and alignment
     (status, payload_size, frameDataSize, pInfoType) = \
         KYFG_StreamGetInfo(buff_handle, KY_STREAM_INFO_CMD.KY_STREAM_INFO_PAYLOAD_SIZE)
     for iFrame in range(num_of_frames):
         (status, bufferhandle) = KYFG_BufferAllocAndAnnounce(buff_handle, payload_size, 0)
 
-
-    print('camera ready for start')
-
-    # find process pid
+    # Get process PID
     pid = os.getpid()
 
-    # find quantity pipes before camera start
+    # Get pipes quantity before camera start
     pipes_num_first = pipes_number(pid)
     for i in range(number_of_tests):
         (status,) = \
-            KYFG_BufferQueueAll(buff_handle, KY_ACQ_QUEUE_TYPE.KY_ACQ_QUEUE_UNQUEUED,
-                                KY_ACQ_QUEUE_TYPE.KY_ACQ_QUEUE_INPUT)
+            KYFG_BufferQueueAll(buff_handle, KY_ACQ_QUEUE_TYPE.KY_ACQ_QUEUE_UNQUEUED, KY_ACQ_QUEUE_TYPE.KY_ACQ_QUEUE_INPUT)
         (status,) = KYFG_CameraStart(camera_handle, buff_handle, 0)
         time.sleep(sleep_after_camera_start)
         (status,) = KYFG_CameraStop(camera_handle)
         print(" Start/Stop " + str(i + 1) + " is ended.")
     print('CameraStop')
 
-    # find quantity pipes after camera stop
+    # Get pipes quantity after camera stop
     pipes_num_second = pipes_number(pid)
     if number_of_tests < 0:
         pipes_num_second = -100
 
-    # close processing
+    # Close processing
     (CallbackRegister_status,) = KYFG_StreamBufferCallbackUnregister(buff_handle, Stream_callback_func)
-
     (KYFG_StreamDelete_status,) = KYFG_StreamDelete(buff_handle)
-
     (status,) = KYFG_CameraClose(camera_handle)
-
     (KYFG_Close_status,) = KYFG_Close(grabber_handle)
 
-    print(f'pipes_num_first - {pipes_num_first}')
-    print(f'pipes_num_second - {pipes_num_second}')
+    print(f'QTY of pipes at the start: {pipes_num_first}')
+    print(f'QTY of pipes at the stop:  {pipes_num_second}')
     assert pipes_num_second == pipes_num_first, 'the number of pipes not the same before KYFG_CameraStart and after KYFG_CameraStop'
 
     print(f'\nExiting from CaseRun({args}) with code 0...')
     return CaseReturnCode.SUCCESS
 
 
-
 def ParseArgs():
     parser = CaseArgumentParser()
     args = parser.parse_args()
     return vars(args)
+
 
 # The flow starts here
 if __name__ == "__main__":
