@@ -203,8 +203,8 @@ def CaseRun(args):
     (status,) = KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, "TimerTriggerSource", "KY_DISABLED")
     is_test_passed = True
     
+    # Stopping each camera, disabling trigger mode, and outputting results
     for cameraHandle in cameraList:
-        print(f"\n*** Stats for {camInfo.deviceModelName} ***")
         streamHandle = streamHandle_array[cameraList.index(cameraHandle)]
         streamCallbackStruct = streamStructsArray[cameraList.index(cameraHandle)]
         (status, camInfo) = KYFG_CameraInfo2(cameraHandle)
@@ -217,6 +217,7 @@ def CaseRun(args):
         KYFG_SetCameraValueEnum_ByValueName(cameraHandle, "TriggerMode", "Off")
         KYFG_SetGrabberValueEnum_ByValueName(grabberHandle, "CameraTriggerMode", "Off")
         (status,) = KYFG_CameraClose(cameraHandle)
+        print(f"\n*** Stats for {camInfo.deviceModelName} ***")
         print(f"CameraHandle {cameraHandle}")
         print("RXFrameCounter:   ", frame_counter)
         print("DropFrameCounter: ", drop_frame_counter)
